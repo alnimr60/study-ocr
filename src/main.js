@@ -70,8 +70,9 @@ resetBtn.addEventListener('click', () => {
 
 async function handleFile(file) {
   const extension = file.name.split('.').pop().toLowerCase();
-  if (extension !== 'pdf' && extension !== 'pptx') {
-    alert('Please upload a PDF or PPTX file.');
+  const allowed = ['pdf', 'pptx', 'jpg', 'jpeg', 'png'];
+  if (!allowed.includes(extension)) {
+    alert('Please upload a PDF, PPTX or Image file.');
     return;
   }
 
@@ -97,8 +98,20 @@ async function handleFile(file) {
     log(`Initializing processor for ${extension}...`);
     if (extension === 'pdf') {
       result = await processPDF(file, ocr, onProgress);
-    } else {
+    } else if (extension === 'pptx') {
       result = await processPPTX(file, ocr, onProgress);
+    } else {
+      // Direct image OCR
+      const url = URL.createObjectURL(file);
+      result = await ocr.processImage(url, (p) => {
+        onProgress({
+          page: 1,
+          totalPages: 1,
+          progress: p,
+          status: `OCRing Image (${Math.round(p * 100)}%)...`
+        });
+      }, (s) => onProgress({ status: s }));
+      URL.revokeObjectURL(url);
     }
 
     log(`Processing finished. Result length: ${result.length}`);

@@ -17,22 +17,43 @@ export async function processPDF(file, ocrEngine, onProgress) {
       status: `Rendering page ${i}/${totalPages}...`
     });
 
+    onProgress({
+      page: i,
+      totalPages,
+      status: `Fetching page ${i}/${totalPages}...`
+    });
+
     const page = await pdf.getPage(i);
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const scale = isMobile ? 1.5 : 2.0; // Optimized scale for mobile
+    const scale = isMobile ? 1.2 : 2.0; // Further reduced for stability
     const viewport = page.getViewport({ scale });
+    
+    onProgress({
+      page: i,
+      totalPages,
+      status: `Rendering page ${i} (Scale: ${scale})...`
+    });
+
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
     canvas.height = viewport.height;
     canvas.width = viewport.width;
 
-    await page.render({ canvasContext: context, viewport }).promise;
-    
-    onProgress({
-      page: i,
-      totalPages,
-      status: `OCRing page ${i}/${totalPages}...`
-    });
+    try {
+      await page.render({ canvasContext: context, viewport }).promise;
+      onProgress({
+        page: i,
+        totalPages,
+        status: `Render complete for page ${i}. Starting OCR...`
+      });
+    } catch (renderErr) {
+      onProgress({
+        page: i,
+        totalPages,
+        status: `RENDER ERROR: ${renderErr.message}`
+      });
+      throw renderErr;
+    }
 
     const text = await ocrEngine.processImage(canvas, (p) => {
       onProgress({
