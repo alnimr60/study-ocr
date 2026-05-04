@@ -221,6 +221,25 @@ p {
   color: #e2e8f0;
 }
 
+.debug-log {
+  width: 100%;
+  margin-top: 2rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  max-height: 100px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.debug-entry {
+  margin-bottom: 0.2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 footer {
   text-align: center;
   color: var(--text-muted);

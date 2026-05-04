@@ -14,9 +14,18 @@ const outputText = document.getElementById('output-text');
 const processingStatus = document.getElementById('processing-status');
 const progressBar = document.getElementById('progress-bar');
 const pageIndicator = document.getElementById('page-indicator');
+const debugLog = document.getElementById('debug-log');
 const copyBtn = document.getElementById('copy-btn');
 const downloadBtn = document.getElementById('download-btn');
 const resetBtn = document.getElementById('reset-btn');
+
+function log(msg) {
+  console.log(msg);
+  const entry = document.createElement('div');
+  entry.className = 'debug-entry';
+  entry.textContent = `> ${msg}`;
+  debugLog.prepend(entry);
+}
 
 // Event Listeners
 dropZone.addEventListener('click', () => fileInput.click());
@@ -71,9 +80,13 @@ async function handleFile(file) {
   processingView.classList.remove('hidden');
   
   try {
+    log(`File detected: ${file.name} (${file.size} bytes)`);
     let result = '';
     const onProgress = (data) => {
-      if (data.status) processingStatus.textContent = data.status;
+      if (data.status) {
+        processingStatus.textContent = data.status;
+        log(data.status);
+      }
       if (data.page && data.totalPages) {
         pageIndicator.textContent = `Processing ${extension.toUpperCase()}: ${data.page} / ${data.totalPages}`;
         const overallProgress = (data.page - 1) / data.totalPages + (data.progress || 0) / data.totalPages;
@@ -81,10 +94,17 @@ async function handleFile(file) {
       }
     };
 
+    log(`Initializing processor for ${extension}...`);
     if (extension === 'pdf') {
       result = await processPDF(file, ocr, onProgress);
     } else {
       result = await processPPTX(file, ocr, onProgress);
+    }
+
+    log(`Processing finished. Result length: ${result.length}`);
+    if (result.trim().length === 0) {
+      log('WARNING: OCR returned empty text!');
+      result = "OCR complete, but no text was found in the document.";
     }
 
     // Show results

@@ -25,17 +25,21 @@ export class OCREngine {
   async processImage(imageSource, onProgress, onStatus) {
     if (!this.isReady) await this.init(onStatus);
     
-    const { data: { text } } = await this.worker.recognize(imageSource, {
-      rotateAuto: true,
-    }, {
-      logger: m => {
-        if (m.status === 'recognizing text' && onProgress) {
-          onProgress(m.progress);
+    console.log('Starting OCR recognition...');
+    try {
+      const { data: { text } } = await this.worker.recognize(imageSource, {}, {
+        logger: m => {
+          if (m.status === 'recognizing text' && onProgress) {
+            onProgress(m.progress);
+          }
         }
-      }
-    });
-
-    return text;
+      });
+      console.log('OCR recognition complete, text length:', text.length);
+      return text;
+    } catch (err) {
+      console.error('OCR Error during recognize:', err);
+      throw err;
+    }
   }
 
   async terminate() {
