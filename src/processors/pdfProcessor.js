@@ -18,7 +18,9 @@ export async function processPDF(file, ocrEngine, onProgress) {
     });
 
     const page = await pdf.getPage(i);
-    const viewport = page.getViewport({ scale: 2.0 });
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const scale = isMobile ? 1.5 : 2.0; // Optimized scale for mobile
+    const viewport = page.getViewport({ scale });
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
     canvas.height = viewport.height;
@@ -38,6 +40,12 @@ export async function processPDF(file, ocrEngine, onProgress) {
         totalPages,
         progress: p,
         status: `OCRing page ${i}/${totalPages} (${Math.round(p * 100)}%)...`
+      });
+    }, (s) => {
+      onProgress({
+        page: i,
+        totalPages,
+        status: s
       });
     });
 

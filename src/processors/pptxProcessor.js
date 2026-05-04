@@ -39,7 +39,13 @@ export async function processPPTX(file, ocrEngine, onProgress) {
       const imgUrl = URL.createObjectURL(imgBlob);
       
       try {
-        const text = await ocrEngine.processImage(imgUrl);
+        const text = await ocrEngine.processImage(imgUrl, null, (s) => {
+          onProgress({
+            page: totalSlides,
+            totalPages: totalSlides,
+            status: s
+          });
+        });
         if (text.trim()) {
           fullText += `#### Image: ${imgName.split('/').pop()}\n\n${text}\n\n`;
         }
