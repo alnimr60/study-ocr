@@ -41,8 +41,14 @@ dropZone.addEventListener('drop', (e) => {
 });
 
 fileInput.addEventListener('change', (e) => {
+  log('File input changed...');
   const file = e.target.files[0];
-  if (file) handleFile(file);
+  if (file) {
+    log(`File selected via input: ${file.name}`);
+    handleFile(file);
+  } else {
+    log('No file selected.');
+  }
 });
 
 copyBtn.addEventListener('click', () => {
@@ -68,10 +74,19 @@ resetBtn.addEventListener('click', () => {
 });
 
 async function handleFile(file) {
+  log(`--- Starting Processing: ${file.name} ---`);
   const extension = file.name.split('.').pop().toLowerCase();
+  
+  if (extension === 'ppt') {
+    alert('Older .ppt files are not supported. Please save your lecture as .pptx and try again!');
+    log('ERROR: Unsupported format (.ppt). Need .pptx');
+    return;
+  }
+
   const allowed = ['pdf', 'pptx', 'jpg', 'jpeg', 'png'];
   if (!allowed.includes(extension)) {
-    alert('Please upload a PDF, PPTX or Image file.');
+    alert(`Format .${extension} is not supported. Please use PDF, PPTX, or Images.`);
+    log(`ERROR: Unsupported format (.${extension})`);
     return;
   }
 
@@ -80,7 +95,12 @@ async function handleFile(file) {
   processingView.classList.remove('hidden');
   
   try {
-    log(`File detected: ${file.name} (${file.size} bytes)`);
+    log(`File detected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+    
+    if (file.size > 50 * 1024 * 1024) {
+      log('WARNING: Large file detected (>50MB). Mobile browsers may crash or run slowly.');
+    }
+
     let result = '';
     const onProgress = (data) => {
       if (data.status) {
