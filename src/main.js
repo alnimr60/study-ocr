@@ -1,4 +1,3 @@
-import './style.css';
 import { OCREngine } from './processors/ocrEngine.js';
 import { processPDF } from './processors/pdfProcessor.js';
 import { processPPTX } from './processors/pptxProcessor.js';
