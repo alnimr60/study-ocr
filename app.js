@@ -36,12 +36,14 @@ async function initOCR(onStatus) {
     if (isEngineReady) return;
     onStatus('Initializing OCR Engine...');
     try {
+        // In Tesseract v5, logger is part of createWorker options
         ocrWorker = await Tesseract.createWorker('eng', 1, {
             logger: m => {
                 if (m.status === 'loading tesseract core' || m.status === 'initializing tesseract' || m.status === 'loading language traineddata') {
                     onStatus(`${m.status} (${Math.round(m.progress * 100)}%)...`);
                 }
-            }
+            },
+            errorHandler: e => log(`WORKER ERROR: ${e}`)
         });
         isEngineReady = true;
         onStatus('OCR Engine Ready!');
@@ -53,15 +55,22 @@ async function initOCR(onStatus) {
 
 async function doOCR(imageSource, onProgress, onStatus) {
     if (!isEngineReady) await initOCR(onStatus);
-    log('Running OCR recognition...');
-    const { data: { text } } = await ocrWorker.recognize(imageSource, {}, {
-        logger: m => {
-            if (m.status === 'recognizing text' && onProgress) {
-                onProgress(m.progress);
-            }
-        }
-    });
-    return text;
+    log('Starting OCR recognition...');
+    
+    // Heartbeat timer to show life
+    const heartbeat = setInterval(() => log('OCR Engine is working...'), 3000);
+    
+    try {
+        // In v5, recognize only takes image and options
+        const { data: { text } } = await ocrWorker.recognize(imageSource);
+        clearInterval(heartbeat);
+        log('OCR Recognition finished successfully!');
+        return text;
+    } catch (err) {
+        clearInterval(heartbeat);
+        log(`RECOGNIZE ERROR: ${err.message}`);
+        throw err;
+    }
 }
 
 // --- PDF PROCESSOR ---
